@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"flag"
 	"os"
+
+	flag "github.com/spf13/pflag"
 )
 
 type CCUFlags struct {
@@ -21,16 +22,16 @@ type CCUFlags struct {
 func Parse(version string) CCUFlags {
 	args := CCUFlags{}
 
-	flag.BoolVar(&args.Help, "h", false, "Show help message")
-	flag.BoolVar(&args.Update, "u", false, "Update the Docker Compose files with the new image tags")
-	flag.BoolVar(&args.Restart, "r", false, "Restart the services after updating the Docker Compose files")
-	flag.BoolVar(&args.Interactive, "i", false, "Interactively choose which docker images to update")
-	flag.StringVar(&args.Directory, "d", ".", "Root directory to search for Docker Compose files")
-	flag.BoolVar(&args.Full, "f", false, "Update to the latest major version")
-	flag.BoolVar(&args.Major, "major", false, "Update to the latest semver version")
+	flag.BoolVarP(&args.Help, "help", "h", false, "Show help message")
+	flag.BoolVarP(&args.Update, "update", "u", false, "Update the Docker Compose files with the new image tags")
+	flag.BoolVarP(&args.Restart, "restart", "r", false, "Restart the services after updating the Docker Compose files")
+	flag.BoolVarP(&args.Interactive, "interactive", "i", false, "Interactively choose which docker images to update")
+	flag.StringVarP(&args.Directory, "directory", "d", ".", "Root directory to search for Docker Compose files")
+	flag.BoolVarP(&args.Full, "full", "f", false, "Update to the latest semver version")
+	flag.BoolVar(&args.Major, "major", false, "Update to the latest major version")
 	flag.BoolVar(&args.Minor, "minor", false, "Update to the latest minor version")
 	flag.BoolVar(&args.Patch, "patch", true, "Update to the latest patch version")
-	flag.BoolVar(&args.Version, "v", false, "Show version information")
+	flag.BoolVarP(&args.Version, "version", "v", false, "Show version information")
 
 	flag.Parse()
 
