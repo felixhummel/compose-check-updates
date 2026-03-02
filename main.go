@@ -3,21 +3,37 @@ package main
 import (
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/padi2312/compose-check-updates/internal"
-	"github.com/padi2312/compose-check-updates/internal/logger"
+	customlogger "github.com/padi2312/compose-check-updates/internal/logger"
 	"github.com/padi2312/compose-check-updates/internal/modes"
 )
 
 var version = "0.2.2"
 
-func main() {
-	// Set colorized logger
-	logger := slog.New(logger.NewCustomHandler(slog.LevelInfo, os.Stdout))
-	slog.SetDefault(logger)
+func parseLogLevel(s string) slog.Level {
+	switch strings.ToLower(s) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelWarn
+	}
+}
 
+func main() {
 	ccuFlags := internal.Parse(version)
+
+	level := parseLogLevel(ccuFlags.LogLevel)
+	log := slog.New(customlogger.NewCustomHandler(level, os.Stdout))
+	slog.SetDefault(log)
 	root := ccuFlags.Directory
 	composeFilePaths, err := internal.GetComposeFilePaths(root)
 	if err != nil {

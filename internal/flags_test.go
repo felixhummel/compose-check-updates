@@ -26,6 +26,7 @@ func TestParse(t *testing.T) {
 				Major:       false,
 				Minor:       false,
 				Patch:       true,
+				LogLevel:    "warning",
 			},
 		},
 		{
@@ -35,6 +36,7 @@ func TestParse(t *testing.T) {
 				Update:    true,
 				Directory: ".",
 				Patch:     true,
+				LogLevel:  "warning",
 			},
 		},
 		{
@@ -46,6 +48,7 @@ func TestParse(t *testing.T) {
 				Minor:     true,
 				Directory: ".",
 				Patch:     true,
+				LogLevel:  "warning",
 			},
 		},
 		{
@@ -54,6 +57,7 @@ func TestParse(t *testing.T) {
 			expected: CCUFlags{
 				Directory: "/path/to/dir",
 				Patch:     true,
+				LogLevel:  "warning",
 			},
 		},
 	}

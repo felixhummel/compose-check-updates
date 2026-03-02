@@ -17,6 +17,7 @@ type CCUFlags struct {
 	Minor       bool   // Update to the latest minor version
 	Patch       bool   // Update to the latest patch version
 	Version     bool   // Version of ccu
+	LogLevel    string // Log level (debug, info, warning, error)
 }
 
 func Parse(version string) CCUFlags {
@@ -32,6 +33,7 @@ func Parse(version string) CCUFlags {
 	flag.BoolVar(&args.Minor, "minor", false, "Update to the latest minor version")
 	flag.BoolVar(&args.Patch, "patch", true, "Update to the latest patch version")
 	flag.BoolVarP(&args.Version, "version", "v", false, "Show version information")
+	flag.StringVarP(&args.LogLevel, "log-level", "l", "warning", "Log level (debug, info, warning, error)")
 
 	flag.Parse()
 
