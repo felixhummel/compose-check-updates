@@ -34,12 +34,11 @@ func main() {
 	level := parseLogLevel(ccuFlags.LogLevel)
 	log := slog.New(customlogger.NewCustomHandler(level, os.Stdout))
 	slog.SetDefault(log)
-	root := ccuFlags.Directory
-	composeFilePaths, err := internal.GetComposeFilePaths(root)
+
+	composeFilePaths, err := internal.GetComposeFilePaths(ccuFlags.Directory)
 	if err != nil {
 		slog.Error("Error getting compose file paths", "error", err)
 		os.Exit(1)
-		return
 	}
 
 	var updateInfos []internal.UpdateInfo
@@ -63,12 +62,5 @@ func main() {
 	}
 
 	wg.Wait()
-
-	if ccuFlags.Interactive {
-		modes.Interactive(updateInfos)
-		return
-	} else {
-		modes.Default(updateInfos, ccuFlags)
-	}
-
+	modes.Default(updateInfos, ccuFlags)
 }

@@ -10,4 +10,4 @@ install-dev:
 	ln -s $$PWD/compose-check-updates  ~/.local/bin/ccu
 
 real-world:
-	ccu -ldebug -d ~/hukudo/moni/prom
+	ccu -ldebug ~/hukudo/moni/prom

@@ -35,41 +35,13 @@ func TestHasNewVersion(t *testing.T) {
 	}
 }
 
-func TestBackup(t *testing.T) {
-	// Create a temporary file
-	tmpFile, err := os.CreateTemp("", "testfile")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	// Write some content to the file
-	content := []byte("test content")
-	if _, err := tmpFile.Write(content); err != nil {
-		t.Fatal(err)
-	}
-	tmpFile.Close()
-
-	u := &UpdateInfo{FilePath: tmpFile.Name()}
-	if err := u.Backup(); err != nil {
-		t.Errorf("Backup() error = %v", err)
-	}
-
-	// Check if backup file exists
-	if _, err := os.Stat(tmpFile.Name() + ".ccu"); os.IsNotExist(err) {
-		t.Errorf("Backup file does not exist")
-	}
-}
-
 func TestUpdate(t *testing.T) {
-	// Create a temporary file
 	tmpFile, err := os.CreateTemp("", "testfile")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
 
-	// Write some content to the file
 	content := []byte("image: myapp:1.0.0")
 	if _, err := tmpFile.Write(content); err != nil {
 		t.Fatal(err)
@@ -87,14 +59,18 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("Update() error = %v", err)
 	}
 
-	// Check if the file content is updated
 	updatedContent, err := os.ReadFile(tmpFile.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedContent := "image: myapp:1.1.0"
-	if string(updatedContent) != expectedContent {
-		t.Errorf("Update() = %v, want %v", string(updatedContent), expectedContent)
+	expected := "image: myapp:1.1.0"
+	if string(updatedContent) != expected {
+		t.Errorf("Update() = %v, want %v", string(updatedContent), expected)
+	}
+
+	// No backup file should be created
+	if _, err := os.Stat(tmpFile.Name() + ".ccu"); !os.IsNotExist(err) {
+		t.Errorf("Update() should not create a backup file")
 	}
 }

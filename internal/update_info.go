@@ -2,7 +2,6 @@ package internal
 
 import (
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -35,34 +34,7 @@ func (u *UpdateInfo) HasNewVersion(major, minor, patch bool) bool {
 	return latest.GreaterThan(current)
 }
 
-func (u *UpdateInfo) Backup() error {
-	input, err := os.ReadFile(u.FilePath)
-	if err != nil {
-		return err
-	}
-
-	// Do a backup of the original file
-	err = os.WriteFile(u.FilePath+".ccu", input, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (u *UpdateInfo) Update() error {
-	// check if a backup file exists
-	_, err := os.Stat(u.FilePath + ".ccu")
-	if err != nil {
-		if os.IsNotExist(err) {
-			// if the file does not exist, create a backup
-			err = u.Backup()
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	input, err := os.ReadFile(u.FilePath)
 	if err != nil {
 		return err
@@ -75,39 +47,5 @@ func (u *UpdateInfo) Update() error {
 		}
 	}
 
-	output := strings.Join(lines, "\n")
-	err = os.WriteFile(u.FilePath, []byte(output), 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (u *UpdateInfo) Restart() error {
-	dockerComposeCommand := "docker-compose"
-	_, err := exec.LookPath(dockerComposeCommand)
-	if err != nil {
-		dockerComposeCommand = "docker compose"
-		_, err = exec.LookPath(dockerComposeCommand)
-		if err != nil {
-			return err
-		}
-	}
-
-	var cmd *exec.Cmd
-	if dockerComposeCommand == "docker-compose" {
-		cmd = exec.Command("docker-compose", "-f", u.FilePath, "up", "-d")
-	} else {
-		cmd = exec.Command("docker", "compose", "-f", u.FilePath, "up", "-d")
-	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return os.WriteFile(u.FilePath, []byte(strings.Join(lines, "\n")), 0644)
 }

@@ -8,32 +8,24 @@ import (
 )
 
 type CCUFlags struct {
-	Help        bool          // Show help message
-	Update      bool          // Update the Docker Compose files with the new image tags
-	Restart     bool          // Restart the services after updating the Docker Compose files
-	Interactive bool          // Interactively choose which docker images to update
-	Directory   string        // Root directory to search for Docker Compose files
-	Full        bool          // Update to the latest semver version
-	Major       bool          // Update to the latest major version
-	Minor       bool          // Update to the latest minor version
-	Patch       bool          // Update to the latest patch version
-	Version     bool          // Version of ccu
-	LogLevel    string        // Log level (debug, info, warning, error)
-	MaxTime     time.Duration // HTTP request timeout
+	Help      bool          // Show help message
+	Directory string        // Root directory to search for Docker Compose files
+	Major     bool          // Include major version updates
+	Minor     bool          // Include minor version updates
+	Patch     bool          // Include patch version updates
+	Version   bool          // Version of ccu
+	LogLevel  string        // Log level (debug, info, warning, error)
+	MaxTime   time.Duration // HTTP request timeout
 }
 
 func Parse(version string) CCUFlags {
 	args := CCUFlags{}
 
+	var patchOnly, minorOnly bool
+
 	flag.BoolVarP(&args.Help, "help", "h", false, "Show help message")
-	flag.BoolVarP(&args.Update, "update", "u", false, "Update the Docker Compose files with the new image tags")
-	flag.BoolVarP(&args.Restart, "restart", "r", false, "Restart the services after updating the Docker Compose files")
-	flag.BoolVarP(&args.Interactive, "interactive", "i", false, "Interactively choose which docker images to update")
-	flag.StringVarP(&args.Directory, "directory", "d", ".", "Root directory to search for Docker Compose files")
-	flag.BoolVarP(&args.Full, "full", "f", false, "Update to the latest semver version")
-	flag.BoolVar(&args.Major, "major", false, "Update to the latest major version")
-	flag.BoolVar(&args.Minor, "minor", false, "Update to the latest minor version")
-	flag.BoolVar(&args.Patch, "patch", true, "Update to the latest patch version")
+	flag.BoolVar(&minorOnly, "minor", false, "Only update to the latest minor version")
+	flag.BoolVar(&patchOnly, "patch", false, "Only update to the latest patch version")
 	flag.BoolVarP(&args.Version, "version", "v", false, "Show version information")
 	flag.StringVarP(&args.LogLevel, "log-level", "l", "warning", "Log level (debug, info, warning, error)")
 	flag.DurationVarP(&args.MaxTime, "max-time", "m", 5*time.Second, "HTTP request timeout per registry call")
@@ -50,7 +42,21 @@ func Parse(version string) CCUFlags {
 		os.Exit(0)
 	}
 
-	if args.Full {
+	if flag.NArg() > 0 {
+		args.Directory = flag.Arg(0)
+	} else {
+		args.Directory = "."
+	}
+
+	if patchOnly {
+		args.Major = false
+		args.Minor = false
+		args.Patch = true
+	} else if minorOnly {
+		args.Major = false
+		args.Minor = true
+		args.Patch = true
+	} else {
 		args.Major = true
 		args.Minor = true
 		args.Patch = true
