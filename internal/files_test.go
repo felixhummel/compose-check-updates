@@ -9,6 +9,7 @@ import (
 func TestGetComposeFilePaths(t *testing.T) {
 	expectedPaths := []string{
 		"../tests/docker-compose.yml",
+		"../tests/build-arg-img/docker-compose.yml",
 		"../tests/folder1/compose.yml",
 		"../tests/folder1/compose.yaml",
 		"../tests/folder2/docker-compose.yml",

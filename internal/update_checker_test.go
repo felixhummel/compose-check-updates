@@ -79,6 +79,62 @@ image: library/ubuntu
 				},
 			},
 		},
+		{
+			name: "IMG build arg",
+			fileData: `
+services:
+  caddy:
+    build:
+      context: caddy/
+      args:
+        IMG: caddy:2.10.2
+  prometheus:
+    build:
+      context: prometheus/
+      args:
+        IMG: prom/prometheus:v3.7.2
+`,
+			expected: []UpdateInfo{
+				{
+					RawLine:       "        IMG: caddy:2.10.2",
+					FullImageName: "caddy:2.10.2",
+					ImageName:     "caddy",
+					CurrentTag:    "2.10.2",
+				},
+				{
+					RawLine:       "        IMG: prom/prometheus:v3.7.2",
+					FullImageName: "prom/prometheus:v3.7.2",
+					ImageName:     "prom/prometheus",
+					CurrentTag:    "v3.7.2",
+				},
+			},
+		},
+		{
+			name: "Mixed image and IMG build arg",
+			fileData: `
+services:
+  app:
+    image: library/nginx:1.19.0
+  caddy:
+    build:
+      args:
+        IMG: caddy:2.10.2
+`,
+			expected: []UpdateInfo{
+				{
+					RawLine:       "    image: library/nginx:1.19.0",
+					FullImageName: "library/nginx:1.19.0",
+					ImageName:     "library/nginx",
+					CurrentTag:    "1.19.0",
+				},
+				{
+					RawLine:       "        IMG: caddy:2.10.2",
+					FullImageName: "caddy:2.10.2",
+					ImageName:     "caddy",
+					CurrentTag:    "2.10.2",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -123,6 +179,13 @@ image: library/ubuntu
 }
 
 func TestUpdateCheckerCheck(t *testing.T) {
+	mockTags := `{"count": 4, "results": [
+		{"name": "1.18.0"},
+		{"name": "1.18.1"},
+		{"name": "1.19.0"},
+		{"name": "1.20.0"}
+	],"next": null}`
+
 	tests := []struct {
 		name     string
 		fileData string
@@ -133,12 +196,31 @@ func TestUpdateCheckerCheck(t *testing.T) {
 			fileData: `
 image: library/myimage:1.19.0
 `,
-
 			expected: []UpdateInfo{
 				{
 					RawLine:       "image: library/myimage:1.19.0",
 					FullImageName: "library/myimage:1.19.0",
 					ImageName:     "library/myimage",
+					CurrentTag:    "1.19.0",
+					LatestTag:     "1.20.0",
+				},
+			},
+		},
+		{
+			name: "IMG build arg update",
+			fileData: `
+services:
+  caddy:
+    build:
+      context: caddy/
+      args:
+        IMG: caddy:1.19.0
+`,
+			expected: []UpdateInfo{
+				{
+					RawLine:       "        IMG: caddy:1.19.0",
+					FullImageName: "caddy:1.19.0",
+					ImageName:     "caddy",
 					CurrentTag:    "1.19.0",
 					LatestTag:     "1.20.0",
 				},
@@ -162,27 +244,49 @@ image: library/myimage:1.19.0
 				tt.expected[i].FilePath = file.Name()
 			}
 
-			// Create an UpdateChecker instance
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`{"count": 2, "results": [
-					{"name": "1.18.0"},
-					{"name": "1.18.1"},
-					{"name": "1.19.0"},
-					{"name": "1.20.0"}
-				],"next": null}`))
+				w.Write([]byte(mockTags))
 			}))
 			defer server.Close()
 
 			registry := NewRegistry(server.URL)
 			updateChecker := NewUpdateChecker(file.Name(), registry)
 
-			// Call Check
 			result, err := updateChecker.Check(true, true, true)
 			assert.NoError(t, err)
-
-			// Verify the results
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestUpdateCheckerCheckBuildArgImgFixture(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"count": 4, "results": [
+			{"name": "1.18.0"},
+			{"name": "1.18.1"},
+			{"name": "1.19.0"},
+			{"name": "1.20.0"}
+		],"next": null}`))
+	}))
+	defer server.Close()
+
+	registry := NewRegistry(server.URL)
+	updateChecker := NewUpdateChecker("../tests/build-arg-img/docker-compose.yml", registry)
+
+	result, err := updateChecker.Check(true, true, true)
+	assert.NoError(t, err)
+
+	// caddy:1.19.0 should be detected as updatable to 1.20.0
+	var caddyInfo *UpdateInfo
+	for i := range result {
+		if result[i].ImageName == "caddy" {
+			caddyInfo = &result[i]
+			break
+		}
+	}
+	assert.NotNil(t, caddyInfo, "caddy IMG entry not found")
+	assert.Equal(t, "1.19.0", caddyInfo.CurrentTag)
+	assert.Equal(t, "1.20.0", caddyInfo.LatestTag)
 }

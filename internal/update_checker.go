@@ -63,25 +63,32 @@ func (u *UpdateChecker) createUpdateInfos() ([]UpdateInfo, error) {
 	defer file.Close()
 
 	imageNamePattern := regexp.MustCompile(`^\s*image:\s*(\S+)\s*$`)
+	imgArgPattern := regexp.MustCompile(`^\s*IMG:\s*(\S+)\s*$`)
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		matches := imageNamePattern.FindStringSubmatch(line)
-		if len(matches) > 1 {
-			imageName := matches[1]
-			name, tag := u.getNameAndTag(imageName)
-			imageKey := name + ":" + tag
 
-			if _, exists := uniqueImages[imageKey]; !exists {
-				uniqueImages[imageKey] = struct{}{}
-				updateInfos = append(updateInfos, UpdateInfo{
-					FilePath:      u.path,
-					RawLine:       line,
-					FullImageName: imageName,
-					ImageName:     name,
-					CurrentTag:    tag,
-				})
-			}
+		var imageName string
+		if matches := imageNamePattern.FindStringSubmatch(line); len(matches) > 1 {
+			imageName = matches[1]
+		} else if matches := imgArgPattern.FindStringSubmatch(line); len(matches) > 1 {
+			imageName = matches[1]
+		} else {
+			continue
+		}
+
+		name, tag := u.getNameAndTag(imageName)
+		imageKey := name + ":" + tag
+
+		if _, exists := uniqueImages[imageKey]; !exists {
+			uniqueImages[imageKey] = struct{}{}
+			updateInfos = append(updateInfos, UpdateInfo{
+				FilePath:      u.path,
+				RawLine:       line,
+				FullImageName: imageName,
+				ImageName:     name,
+				CurrentTag:    tag,
+			})
 		}
 	}
 

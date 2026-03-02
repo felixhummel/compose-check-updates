@@ -1,0 +1,36 @@
+services:
+  caddy:
+    build:
+      context: caddy/
+      args:
+        # https://hub.docker.com/_/caddy/tags
+        IMG: caddy:1.19.0
+
+  authelia:
+    image: authelia/authelia:4.39
+
+  prometheus:
+    build:
+      context: prometheus/
+      args:
+        # https://hub.docker.com/r/prom/prometheus/tags
+        # https://github.com/prometheus/prometheus/blob/v2.38.0/Dockerfile
+        IMG: prom/prometheus:v3.7.2
+
+  node-exporter:
+    image: prom/node-exporter:v1.10.2
+
+  grafana:
+    build:
+      context: grafana/
+      args:
+        # https://github.com/grafana/grafana/releases
+        # https://hub.docker.com/r/grafana/grafana/tags
+        # https://raw.githubusercontent.com/grafana/grafana/v9.1.1/Dockerfile
+        IMG: grafana/grafana:12.3.4
+
+  curl:
+    hostname: curl.prom
+    image: curlimages/curl
+    command: [ 'sleep', 'infinity' ]
+    stop_signal: SIGKILL
