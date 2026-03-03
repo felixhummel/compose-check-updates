@@ -1,4 +1,4 @@
-module github.com/padi2312/compose-check-updates
+module github.com/felixhummel/compose-update
 
 go 1.23.2
 

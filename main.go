@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/padi2312/compose-check-updates/internal"
-	customlogger "github.com/padi2312/compose-check-updates/internal/logger"
-	"github.com/padi2312/compose-check-updates/internal/modes"
+	"github.com/felixhummel/compose-update/internal"
+	customlogger "github.com/felixhummel/compose-update/internal/logger"
+	"github.com/felixhummel/compose-update/internal/modes"
 )
 
 var version = "0.2.2"

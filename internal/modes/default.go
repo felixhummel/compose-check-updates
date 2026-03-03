@@ -3,7 +3,7 @@ package modes
 import (
 	"log/slog"
 
-	"github.com/padi2312/compose-check-updates/internal"
+	"github.com/felixhummel/compose-update/internal"
 )
 
 func Default(updateInfos []internal.UpdateInfo) {
